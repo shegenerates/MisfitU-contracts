@@ -17,10 +17,10 @@ contract Mifit is ERC721URIStorage {
     }
 
     function mint(address player, string memory tokenURI)
-        public
+        public payable
         returns (uint256)
     {
-        require(_tokenIds < 10000); //10000 item cap
+        require(_tokenIds.current() < 10000); //10000 item cap
         require(msg.value >= fee);  //User must pay set fee.
 
         _tokenIds.increment();
@@ -32,13 +32,13 @@ contract Mifit is ERC721URIStorage {
         return newItemId;
     }
 
-    function updateOwner(address newOwner) {
+    function updateOwner(address newOwner) public{
       require(msg.sender == owner);
       owner = newOwner;
     }
 
-    function updateFee(uint newFee) {
+    function updateFee(uint newFee) public{
       require(msg.sender == owner);
-      fee = newFee
+      fee = newFee;
     }
 }
