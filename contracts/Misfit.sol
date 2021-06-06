@@ -21,7 +21,7 @@ contract Mifit is ERC721URIStorage {
         returns (uint256)
     {
         require(_tokenIds < 10000); //10000 item cap
-        require(msg.value >= fee);
+        require(msg.value >= fee);  //User must pay set fee.
 
         _tokenIds.increment();
 
