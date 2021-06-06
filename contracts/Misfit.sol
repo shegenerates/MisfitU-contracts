@@ -8,7 +8,13 @@ contract Mifit is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    constructor() ERC721("Misfit", "MFU") {}
+    address owner;
+    uint fee;
+
+    constructor(uint _fee) ERC721("Misfit", "MFU") {
+      owner = msg.sender;
+      fee = _fee;
+    }
 
     function mint(address player, string memory tokenURI)
         public
@@ -22,5 +28,13 @@ contract Mifit is ERC721URIStorage {
         _setTokenURI(newItemId, tokenURI);
 
         return newItemId;
+    }
+
+    function updateOwner() {
+
+    }
+
+    function updateFee() {
+
     }
 }
