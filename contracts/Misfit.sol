@@ -10,6 +10,8 @@ contract Misfit is ERC721URIStorage {
 
     address owner;
     uint fee;
+    
+    uint reserved;
 
     event Minted(address to, uint id, string uri);
 
@@ -38,6 +40,32 @@ contract Misfit is ERC721URIStorage {
 
         return newItemId;
     }
+    
+    function getOwnerResrveMinted() public view returns(uint){
+        return reserved;
+    }
+    
+    function mintOwner(address player, string memory tokenURI)
+        public
+        returns (uint256)
+    {
+        require(msg.sender == owner);
+        require(reserved < 100); //owner can mint up to 100 for free. this can be handed over to a DAO too.
+        
+        require(_tokenIds.current() < 10000); //10000 item cap
+
+        _tokenIds.increment();
+
+        uint256 newItemId = _tokenIds.current();
+        _mint(player, newItemId);
+        _setTokenURI(newItemId, tokenURI);
+
+        Minted(player, newItemId, tokenURI);
+        
+        reserved = reserved + 1;
+
+        return newItemId;
+    }
 
     function updateOwner(address newOwner) public{
       require(msg.sender == owner);
@@ -59,5 +87,10 @@ contract Misfit is ERC721URIStorage {
 
     function getOwner() public view returns (address) {
       return owner;
+    }
+    
+    function cashOut() public{
+        require(msg.sender == owner);
+        msg.sender.transfer(address(this).balance);
     }
 }
