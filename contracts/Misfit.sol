@@ -10,7 +10,7 @@ contract Misfit is ERC721URIStorage {
 
     address owner;
     uint fee;
-    
+
     uint reserved;
 
     event Minted(address to, uint id, string uri);
@@ -27,7 +27,7 @@ contract Misfit is ERC721URIStorage {
         public payable
         returns (uint256)
     {
-        require(_tokenIds.current() < 10000); //10000 item cap
+        require(_tokenIds.current() < 9900); //10000 item cap (9900 public + 100 team mints)
         require(msg.value >= fee);  //User must pay set fee.
 
         _tokenIds.increment();
@@ -40,18 +40,18 @@ contract Misfit is ERC721URIStorage {
 
         return newItemId;
     }
-    
+
     function getOwnerResrveMinted() public view returns(uint){
         return reserved;
     }
-    
+
     function mintOwner(address player, string memory tokenURI)
         public
         returns (uint256)
     {
         require(msg.sender == owner);
         require(reserved < 100); //owner can mint up to 100 for free. this can be handed over to a DAO too.
-        
+
         require(_tokenIds.current() < 10000); //10000 item cap
 
         _tokenIds.increment();
@@ -61,7 +61,7 @@ contract Misfit is ERC721URIStorage {
         _setTokenURI(newItemId, tokenURI);
 
         Minted(player, newItemId, tokenURI);
-        
+
         reserved = reserved + 1;
 
         return newItemId;
@@ -88,9 +88,21 @@ contract Misfit is ERC721URIStorage {
     function getOwner() public view returns (address) {
       return owner;
     }
-    
+
     function cashOut() public{
         require(msg.sender == owner);
         msg.sender.transfer(address(this).balance);
+    }
+
+    //To implement royalties, we need to override the transfer functions in ERC-721s
+
+    safeTransferFrom(address from, address to, uint256 tokenId, bytes _data) public  override {
+      address(this).transfer(msg.value * 0.025); //2.5% royalties
+      super.safeTransferFrom(address from, address to, uint256 tokenId, bytes _data);
+    }
+
+    safeTransferFrom(address from, address to, uint256 tokenId) public virtual override{
+      address(this).transfer(msg.value * 0.025); //2.5% royalties
+      super.safeTransferFrom(address from, address to, uint256 tokenId);
     }
 }
