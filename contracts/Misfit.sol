@@ -3,29 +3,27 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "openzeppelin/contracts/access/Ownable.sol";
 
-contract Misfit_University is ERC721URIStorage {
+contract Misfit_University is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    address public owner;
     uint public fee;
 
     uint public reserved;
-    
-    string public baseUri; 
+
+    string public baseUri;
 
     event Minted(address to, uint id, string uri);
 
     event PriceUpdated(uint newPrice);
-    event OwnerUpdated(address newOwner);
 
     constructor() ERC721("Misfit University", "MFU") {
-      owner = msg.sender;
       fee = 80000000000000000 wei; //0.08 ETH
       baseUri = "ipfs://QmbumZq4f81hc2KsVWMMH2AmRpw7nSwX3KBsjABewabNnj/";
     }
-    
+
     /**
      * @dev Converts a `uint256` to its ASCII `string` decimal representation.
      */
@@ -50,7 +48,7 @@ contract Misfit_University is ERC721URIStorage {
         }
         return string(buffer);
     }
-    
+
     /*
     * Mint Misfits
     */
@@ -61,15 +59,15 @@ contract Misfit_University is ERC721URIStorage {
         require(_tokenIds.current() + numberOfMints < 9900, "Maximum amount of Misfits already minted."); //10000 item cap (9900 public + 100 team mints)
         require(msg.value >= fee * numberOfMints, "Fee is not correct.");  //User must pay set fee.`
         require(numberOfMints <= 20, "You cant mint more than 20 at a time.");
-        
+
         for(uint i = 0; i < numberOfMints; i++) {
-            
+
             _tokenIds.increment();
             uint256 newItemId = _tokenIds.current();
             string memory tokenURI = string(abi.encodePacked(baseUri, toString(newItemId),  ".json"));
             _mint(player, newItemId);
             _setTokenURI(newItemId, tokenURI);
-            
+
             //removed Mint event here bc of gas intensity.
         }
 
@@ -81,7 +79,7 @@ contract Misfit_University is ERC721URIStorage {
     }
 
     function mintOwner(address player, string memory tokenURI)
-        public
+        public onlyOwner
         returns (uint256)
     {
         require(msg.sender == owner);
@@ -102,15 +100,7 @@ contract Misfit_University is ERC721URIStorage {
         return newItemId;
     }
 
-    function updateOwner(address newOwner) public{
-      require(msg.sender == owner);
-      owner = newOwner;
-
-      emit OwnerUpdated(newOwner);
-    }
-
-    function updateFee(uint newFee) public{
-      require(msg.sender == owner);
+    function updateFee(uint newFee) public onlyOwner{
       fee = newFee;
 
       emit PriceUpdated(newFee);
@@ -120,11 +110,7 @@ contract Misfit_University is ERC721URIStorage {
       return fee;
     }
 
-    function getOwner() public view returns (address) {
-      return owner;
-    }
-
-    function cashOut() public{
+    function cashOut() public onlyOwner{
         require(msg.sender == owner);
         payable(msg.sender).transfer(address(this).balance);
     }
