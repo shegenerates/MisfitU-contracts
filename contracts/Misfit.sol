@@ -4,41 +4,76 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract Misfit is ERC721URIStorage {
+contract Misfit_University is ERC721URIStorage {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    address owner;
-    uint fee;
+    address public owner;
+    uint public fee;
 
-    uint reserved;
+    uint public reserved;
+    
+    string public baseUri; 
 
     event Minted(address to, uint id, string uri);
 
     event PriceUpdated(uint newPrice);
     event OwnerUpdated(address newOwner);
 
-    constructor(uint _fee) ERC721("Misfit", "MFU") {
+    constructor() ERC721("Misfit University", "MFU") {
       owner = msg.sender;
-      fee = _fee;
+      fee = 80000000000000000 wei; //0.08 ETH
+      baseUri = "ipfs://QmbumZq4f81hc2KsVWMMH2AmRpw7nSwX3KBsjABewabNnj/";
     }
+    
+    /**
+     * @dev Converts a `uint256` to its ASCII `string` decimal representation.
+     */
+    function toString(uint256 value) internal pure returns (string memory) {
+        // Inspired by OraclizeAPI's implementation - MIT licence
+        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
 
-    function mint(address player, string memory tokenURI)
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
+    }
+    
+    /*
+    * Mint Misfits
+    */
+    function mint(address player, uint numberOfMints)
         public payable
         returns (uint256)
     {
-        require(_tokenIds.current() < 9900); //10000 item cap (9900 public + 100 team mints)
-        require(msg.value >= fee);  //User must pay set fee.
+        require(_tokenIds.current() + numberOfMints < 9900, "Maximum amount of Misfits already minted."); //10000 item cap (9900 public + 100 team mints)
+        require(msg.value >= fee * numberOfMints, "Fee is not correct.");  //User must pay set fee.`
+        require(numberOfMints <= 20, "You cant mint more than 20 at a time.");
+        
+        for(uint i = 0; i < numberOfMints; i++) {
+            
+            _tokenIds.increment();
+            uint256 newItemId = _tokenIds.current();
+            string memory tokenURI = string(abi.encodePacked(baseUri, toString(newItemId),  ".json"));
+            _mint(player, newItemId);
+            _setTokenURI(newItemId, tokenURI);
+            
+            //removed Mint event here bc of gas intensity.
+        }
 
-        _tokenIds.increment();
-
-        uint256 newItemId = _tokenIds.current();
-        _mint(player, newItemId);
-        _setTokenURI(newItemId, tokenURI);
-
-        Minted(player, newItemId, tokenURI);
-
-        return newItemId;
+        return _tokenIds.current();
     }
 
     function getOwnerResrveMinted() public view returns(uint){
@@ -60,7 +95,7 @@ contract Misfit is ERC721URIStorage {
         _mint(player, newItemId);
         _setTokenURI(newItemId, tokenURI);
 
-        Minted(player, newItemId, tokenURI);
+        emit Minted(player, newItemId, tokenURI);
 
         reserved = reserved + 1;
 
@@ -71,14 +106,14 @@ contract Misfit is ERC721URIStorage {
       require(msg.sender == owner);
       owner = newOwner;
 
-      OwnerUpdated(newOwner);
+      emit OwnerUpdated(newOwner);
     }
 
     function updateFee(uint newFee) public{
       require(msg.sender == owner);
       fee = newFee;
 
-      PriceUpdated(newFee);
+      emit PriceUpdated(newFee);
     }
 
     function getFee() public view returns (uint) {
@@ -91,18 +126,6 @@ contract Misfit is ERC721URIStorage {
 
     function cashOut() public{
         require(msg.sender == owner);
-        msg.sender.transfer(address(this).balance);
-    }
-
-    //To implement royalties, we need to override the transfer functions in ERC-721s
-
-    safeTransferFrom(address from, address to, uint256 tokenId, bytes _data) public  override {
-      address(this).transfer(msg.value * 0.025); //2.5% royalties
-      super.safeTransferFrom(address from, address to, uint256 tokenId, bytes _data);
-    }
-
-    safeTransferFrom(address from, address to, uint256 tokenId) public virtual override{
-      address(this).transfer(msg.value * 0.025); //2.5% royalties
-      super.safeTransferFrom(address from, address to, uint256 tokenId);
+        payable(msg.sender).transfer(address(this).balance);
     }
 }
