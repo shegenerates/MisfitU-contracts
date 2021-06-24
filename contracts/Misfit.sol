@@ -82,10 +82,9 @@ contract Misfit_University is ERC721URIStorage, Ownable {
         public onlyOwner
         returns (uint256)
     {
-        require(msg.sender == owner);
         require(reserved < 100); //owner can mint up to 100 for free. this can be handed over to a DAO too.
 
-        require(_tokenIds.current() < 10000); //10000 item cap
+        require(_tokenIds.current() < 10000); //10000 item cap no matter what
 
         _tokenIds.increment();
 
@@ -111,7 +110,6 @@ contract Misfit_University is ERC721URIStorage, Ownable {
     }
 
     function cashOut() public onlyOwner{
-        require(msg.sender == owner);
         payable(msg.sender).transfer(address(this).balance);
     }
 }
