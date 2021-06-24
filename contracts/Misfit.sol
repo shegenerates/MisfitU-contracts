@@ -56,7 +56,7 @@ contract Misfit_University is ERC721URIStorage, Ownable {
         public payable
         returns (uint256)
     {
-        require(_tokenIds.current() + numberOfMints < 9900, "Maximum amount of Misfits already minted."); //10000 item cap (9900 public + 100 team mints)
+        require(_tokenIds.current() + numberOfMints <= 9900, "Maximum amount of Misfits already minted."); //10000 item cap (9900 public + 100 team mints)
         require(msg.value >= fee * numberOfMints, "Fee is not correct.");  //User must pay set fee.`
         require(numberOfMints <= 20, "You cant mint more than 20 at a time.");
 
