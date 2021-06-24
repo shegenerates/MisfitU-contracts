@@ -74,7 +74,7 @@ contract Misfit_University is ERC721URIStorage, Ownable {
         return _tokenIds.current();
     }
 
-    function getOwnerResrveMinted() public view returns(uint){
+    function getOwnerMintedTotal() public view returns(uint){
         return reserved;
     }
 
